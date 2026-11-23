@@ -4,18 +4,18 @@
 
 ## 下载与安装
 
-**[下载折历 v0.1.1（macOS 通用 DMG）](https://github.com/liangxiaoLv/dayfold/releases/download/v0.1.1/Dayfold-0.1.1-macOS-universal.dmg)**
+**[下载折历 v0.1.2（macOS 通用 DMG）](https://github.com/liangxiaoLv/dayfold/releases/download/v0.1.2/Dayfold-0.1.2-macOS-universal.dmg)**
 
 适用于 macOS 14 及以上版本，支持 Apple 芯片和 Intel Mac。
 
 1. 双击下载的 DMG，将「折历」拖到旁边的「Applications（应用程序）」文件夹。
 2. 从「应用程序」打开「折历」，即可在桌面查看本周的待办。
 
-v0.1.1 尚未经过 Apple 公证。若首次打开时提示无法验证开发者，确认安装包来自本仓库后，可前往「系统设置 → 隐私与安全性」选择「仍要打开」。[Apple 官方说明](https://support.apple.com/zh-cn/102445) · [版本说明与 SHA-256 校验值](https://github.com/liangxiaoLv/dayfold/releases/tag/v0.1.1)
+v0.1.2 尚未经过 Apple 公证。若首次打开时提示无法验证开发者，确认安装包来自本仓库后，可前往「系统设置 → 隐私与安全性」选择「仍要打开」。[Apple 官方说明](https://support.apple.com/zh-cn/102445) · [版本说明与 SHA-256 校验值](https://github.com/liangxiaoLv/dayfold/releases/tag/v0.1.2)
 
-## 从源码构建版本检查更新
+## 检查更新
 
-在「任务总览」或「折历」菜单中点「检查更新」。发现新的 GitHub 正式版后，可以下载通用 DMG。折历核对文件大小和 SHA-256 后打开安装包，按窗口提示替换现有 App 即可。
+从 v0.1.2 起，可在「任务总览」或「折历」菜单中点「检查更新」。首次从旧版正式版升级时，请下载上方的 DMG，退出折历后替换原 App。发现新的 GitHub 正式版后，可以下载通用 DMG。折历核对文件大小和 SHA-256 后打开安装包，按窗口提示替换现有 App 即可。
 
 ## 已确认的功能
 
