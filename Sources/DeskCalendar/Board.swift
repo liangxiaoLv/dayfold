@@ -41,6 +41,8 @@ struct BoardView: View {
                                 space.placement = placement
                             }
                         }
+                    Button("缩小") { space.collapse() }
+                        .help("缩小为可拖动的一行")
                 }.buttonStyle(.borderless)
                 HStack(spacing: 8) {
                     Button { datePicker.toggle() } label: {
@@ -96,6 +98,51 @@ struct BoardView: View {
             Button("好") { store.errorMessage = nil }
         } message: { Text(store.errorMessage ?? "") }
     }
+}
+
+struct CompactBar: View {
+    let expand: () -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Label("待办日历", systemImage: "calendar")
+                .font(.callout.weight(.medium))
+                .padding(.leading, 12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .overlay { WindowDragArea().help("拖动窄栏") }
+            Button("展开", action: expand)
+                .buttonStyle(.bordered)
+                .padding(.trailing, 8)
+        }
+        .foregroundStyle(.white)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color(red: 0.14, green: 0.20, blue: 0.18).opacity(0.94)))
+        .preferredColorScheme(.dark)
+    }
+}
+
+private struct WindowDragArea: NSViewRepresentable {
+    final class Handle: NSView {
+        private var grabOffset: NSPoint?
+        override var mouseDownCanMoveWindow: Bool { false }
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+        override func mouseDown(with event: NSEvent) {
+            grabOffset = event.locationInWindow
+        }
+        override func mouseDragged(with event: NSEvent) {
+            guard let window, let grabOffset else { return }
+            let pointer = window.convertPoint(toScreen: event.locationInWindow)
+            window.setFrameOrigin(NSPoint(x: pointer.x - grabOffset.x, y: pointer.y - grabOffset.y))
+        }
+        override func mouseUp(with event: NSEvent) {
+            grabOffset = nil
+        }
+        override func resetCursorRects() {
+            addCursorRect(bounds, cursor: .openHand)
+        }
+    }
+
+    func makeNSView(context: Context) -> Handle { Handle() }
+    func updateNSView(_ nsView: Handle, context: Context) {}
 }
 
 private struct PlacementPicker: View {

@@ -60,6 +60,7 @@ final class Workspace: ObservableObject {
     @Published var anchor = Day(Date())
     @Published var today = Day(Date())
     private var board: NSPanel?
+    private var compactBar: NSPanel?
     private var overview: NSWindow?
     private var editor: NSWindow?
     init() {
@@ -74,7 +75,7 @@ final class Workspace: ObservableObject {
             self.reminders.synchronize(self.store.tasks)
         }
     }
-    func start() {
+    private func desktopPanel() -> NSPanel {
         let panel = DesktopPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.title = "桌面待办日历"
         panel.backgroundColor = .clear
@@ -85,15 +86,40 @@ final class Workspace: ObservableObject {
         panel.isFloatingPanel = false
         panel.isMovable = false
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        return panel
+    }
+    func start() {
+        let panel = desktopPanel()
         board = panel
         panel.contentView = host(BoardView(space: self, store: store))
         position()
         applyLevel()
         if store.errorMessage == nil { reminders.synchronize(store.tasks) }
     }
+    func collapse() {
+        guard let board, compactBar == nil else { return }
+        let bar = desktopPanel()
+        bar.title = "待办日历窄栏"
+        bar.isMovable = true
+        bar.level = board.level
+        bar.contentView = host(CompactBar(expand: { [weak self] in self?.expand() }))
+        let size = NSSize(width: 176, height: 38)
+        let frame = NSRect(x: board.frame.maxX - size.width, y: board.frame.maxY - size.height,
+                           width: size.width, height: size.height)
+        bar.setFrame(frame, display: true)
+        compactBar = bar
+        board.orderOut(nil)
+        bar.orderFrontRegardless()
+    }
+    func expand() {
+        guard let bar = compactBar else { return }
+        bar.orderOut(nil)
+        compactBar = nil
+        board?.orderFrontRegardless()
+    }
     func refreshDay() {
         let new = Day(Date())
-        if anchor == today { anchor = new }
+        if compactBar == nil && anchor == today { anchor = new }
         today = new
     }
     func position(animated: Bool = false) {
@@ -105,7 +131,8 @@ final class Workspace: ObservableObject {
         let desktop = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
         overview?.level = pinned ? .floating : .normal
         board?.level = pinned ? .floating : desktop
-        board?.orderFrontRegardless()
+        compactBar?.level = board?.level ?? desktop
+        (compactBar ?? board)?.orderFrontRegardless()
     }
     private func host<V: View>(_ view: V) -> NSHostingView<some View> {
         let hosted = NSHostingView(rootView: view.environment(\.locale, Locale(identifier: "zh_CN")))
