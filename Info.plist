@@ -4,7 +4,7 @@
 <key>CFBundleIdentifier</key><string>local.deskcalendar.app</string>
 <key>CFBundleExecutable</key><string>DeskCalendar</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
-<key>CFBundleName</key><string>桌面待办日历</string>
+<key>CFBundleName</key><string>折历</string>
 <key>CFBundleDevelopmentRegion</key><string>zh_CN</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>0.1.0</string>

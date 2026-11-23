@@ -79,7 +79,7 @@ final class Workspace: ObservableObject {
     }
     private func desktopPanel() -> NSPanel {
         let panel = DesktopPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        panel.title = "桌面待办日历"
+        panel.title = "折历"
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = false
@@ -101,7 +101,7 @@ final class Workspace: ObservableObject {
     func collapse() {
         guard let board, compactBar == nil else { return }
         let bar = desktopPanel()
-        bar.title = "待办日历窄栏"
+        bar.title = "折历窄栏"
         bar.isMovable = true
         bar.level = board.level
         bar.contentView = host(CompactBar(expand: { [weak self] in self?.expand() }))
@@ -198,7 +198,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appItem = NSMenuItem()
         let app = NSMenu()
         app.addItem(withTitle: "任务总览", action: #selector(showOverview), keyEquivalent: "0").target = self
-        app.addItem(withTitle: "退出桌面待办日历", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        app.addItem(withTitle: "退出折历", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = app
         menu.addItem(appItem)
         let edit = NSMenu(title: "编辑")

@@ -105,7 +105,7 @@ struct CompactBar: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            Label("待办日历", systemImage: "calendar")
+            Label("折历", systemImage: "calendar")
                 .font(.callout.weight(.medium))
                 .padding(.leading, 12)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)

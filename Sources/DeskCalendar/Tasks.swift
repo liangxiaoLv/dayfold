@@ -81,7 +81,7 @@ struct TaskEditor: View {
                         problem = "请选择将来的提醒时间，或关闭截止日提醒。"; return
                     }
                     guard try await space.reminders.authorize() else {
-                        problem = "请在系统设置的「通知」中允许桌面待办日历发送通知，或关闭此任务的提醒后保存。"; return
+                        problem = "请在系统设置的「通知」中允许折历发送通知，或关闭此任务的提醒后保存。"; return
                     }
                 }
             }
