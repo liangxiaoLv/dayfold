@@ -4,14 +4,14 @@
 
 ## 下载与安装
 
-**[下载折历 v0.1.3（macOS 通用 DMG）](https://github.com/liangxiaoLv/dayfold/releases/download/v0.1.3/Dayfold-0.1.3-macOS-universal.dmg)**
+**[下载折历 v0.1.4（macOS 通用 DMG）](https://github.com/liangxiaoLv/dayfold/releases/download/v0.1.4/Dayfold-0.1.4-macOS-universal.dmg)**
 
 适用于 macOS 14 及以上版本，支持 Apple 芯片和 Intel Mac。
 
 1. 双击下载的 DMG，将「折历」拖到旁边的「Applications（应用程序）」文件夹。
 2. 从「应用程序」打开「折历」，即可在桌面查看本周的待办。
 
-v0.1.3 尚未经过 Apple 公证。若首次打开时提示无法验证开发者，确认安装包来自本仓库后，可前往「系统设置 → 隐私与安全性」选择「仍要打开」。[Apple 官方说明](https://support.apple.com/zh-cn/102445) · [版本说明与 SHA-256 校验值](https://github.com/liangxiaoLv/dayfold/releases/tag/v0.1.3)
+v0.1.4 尚未经过 Apple 公证。若首次打开时提示无法验证开发者，确认安装包来自本仓库后，可前往「系统设置 → 隐私与安全性」选择「仍要打开」。[Apple 官方说明](https://support.apple.com/zh-cn/102445) · [版本说明与 SHA-256 校验值](https://github.com/liangxiaoLv/dayfold/releases/tag/v0.1.4)
 
 ## 检查更新
 
@@ -32,6 +32,8 @@ v0.1.3 尚未经过 Apple 公证。若首次打开时提示无法验证开发者
 - App 内提供全部待办的总览和统计。
 
 ## 桌面显示
+
+连接多台显示器时，点击日历右上角的四格布局按钮，在「显示器」下选择内置屏或外接屏。折历会记住选择，并在目标屏幕上沿用当前视图及占屏位置。
 
 日历默认贴在桌面，打开其他应用窗口时，重叠部分会被自然盖住。开启「置顶」后，日历显示在普通应用窗口上方。关闭「置顶」即可恢复桌面显示。
 
