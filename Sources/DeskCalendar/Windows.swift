@@ -51,6 +51,22 @@ final class DesktopPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+struct RestartLayout: Codable {
+    let anchor: Date
+    let board: CGRect
+    let bar: CGRect?
+    let overview: CGRect?
+    static let flag = "--dayfold-layout="
+    var argument: String {
+        get throws { try Self.flag + JSONEncoder().encode(self).base64EncodedString() }
+    }
+    static func fromArguments() -> Self? {
+        guard let arg = CommandLine.arguments.first(where: { $0.hasPrefix(flag) }),
+              let data = Data(base64Encoded: String(arg.dropFirst(flag.count))) else { return nil }
+        return try? JSONDecoder().decode(Self.self, from: data)
+    }
+}
+
 @MainActor
 final class Workspace: ObservableObject {
     let store: TaskStore
@@ -64,6 +80,7 @@ final class Workspace: ObservableObject {
     private var board: NSPanel?
     private var compactBar: NSPanel?
     private let updates = Updates()
+    private(set) var restarting = false
     private var updateWindow: NSWindow?
     private var overview: NSWindow?
     private var editor: NSWindow?
@@ -98,7 +115,55 @@ final class Workspace: ObservableObject {
         panel.contentView = host(BoardView(space: self, store: store))
         position()
         applyLevel()
+        if let layout = RestartLayout.fromArguments() {
+            anchor = Day(layout.anchor)
+            restore(board, frame: layout.board)
+            if let frame = layout.bar { collapse(); restore(compactBar, frame: frame) }
+            if let frame = layout.overview { openOverview(); restore(overview, frame: frame) }
+        }
         if store.errorMessage == nil { reminders.synchronize(store.tasks) }
+    }
+    private func restore(_ window: NSWindow?, frame: CGRect) {
+        if frame.width > 0, frame.height > 0, NSScreen.screens.contains(where: { $0.visibleFrame.intersects(frame) }) {
+            window?.setFrame(frame, display: true)
+        }
+    }
+
+    func requireSavedEditor() throws {
+        if editor?.isVisible == true {
+            editor?.makeKeyAndOrderFront(nil)
+            throw ReplacementError("请先保存或关闭正在编辑的待办，再更新折历。")
+        }
+    }
+
+    func restart(with replacement: AppReplacement) async throws {
+        let arguments: [String]
+        do {
+            try requireSavedEditor()
+            let others = NSWorkspace.shared.runningApplications.filter {
+                $0.processIdentifier != ProcessInfo.processInfo.processIdentifier &&
+                $0.bundleURL?.resolvingSymlinksInPath().path == replacement.installed.resolvingSymlinksInPath().path
+            }
+            guard others.isEmpty else { throw ReplacementError("请先关闭从同一位置启动的另一份折历，再重试。") }
+            guard let board else { throw ReplacementError("日历窗口尚未就绪，请重试。") }
+            let layout = RestartLayout(anchor: anchor.date, board: board.frame, bar: compactBar?.frame,
+                                       overview: overview?.isVisible == true ? overview?.frame : nil)
+            arguments = [try layout.argument]
+        } catch { replacement.discard(); throw error }
+
+        let visibleWindows = [board, compactBar, overview].compactMap { $0 }.filter { $0.isVisible }
+        restarting = true
+        visibleWindows.forEach { $0.orderOut(nil) }
+        defaults.synchronize()
+        do {
+            try await replacement.restart(arguments: arguments)
+            restarting = false
+            NSApp.terminate(nil)
+        } catch {
+            restarting = false
+            visibleWindows.forEach { $0.orderFrontRegardless() }
+            throw error
+        }
     }
     func collapse() {
         guard let board, compactBar == nil else { return }
@@ -160,7 +225,7 @@ final class Workspace: ObservableObject {
     func checkForUpdates() {
         if updateWindow == nil {
             let win = window(title: "检查更新", size: CGSize(width: 380, height: 225), resizable: false)
-            win.contentView = host(UpdateView(updates: updates))
+            win.contentView = host(UpdateView(updates: updates, space: self))
             updateWindow = win
         }
         if updateWindow?.isVisible != true { updates.check() }
@@ -169,6 +234,7 @@ final class Workspace: ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
     }
     func openOverview() {
+        guard !restarting else { return }
         if overview == nil {
             let win = window(title: "任务总览", size: CGSize(width: 660, height: 500), resizable: true)
             win.minSize = CGSize(width: 450, height: 320)
@@ -180,6 +246,7 @@ final class Workspace: ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
     }
     func edit(_ item: CalendarTask) {
+        guard !restarting else { return }
         if let editor, editor.isVisible {
             editor.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -232,6 +299,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func refresh() { space.refreshDay() }
     @objc private func checkUpdates() { space.checkForUpdates() }
     @objc private func showOverview() { space.openOverview() }
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        space?.restarting == true ? .terminateCancel : .terminateNow
+    }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         space.openOverview()
         return false

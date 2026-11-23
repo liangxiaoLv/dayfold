@@ -42,7 +42,7 @@ struct DayfoldRelease: Decodable {
 }
 
 enum UpdateError: LocalizedError {
-    case invalidRelease, missingInstaller, integrity, network(Int), open
+    case invalidRelease, missingInstaller, integrity, network(Int)
     var errorDescription: String? {
         switch self {
         case .invalidRelease: return "无法识别正式版的版本信息。"
@@ -50,7 +50,6 @@ enum UpdateError: LocalizedError {
         case .integrity: return "安装包校验失败，请重新下载。"
         case .network(403), .network(429): return "GitHub 暂时限制了请求，请稍后再试。"
         case let .network(code): return "更新服务暂时不可用（HTTP \(code)）。"
-        case .open: return "系统未能打开安装包，请重试。"
         }
     }
 }
@@ -94,7 +93,7 @@ private func checkResponse(_ response: URLResponse) throws {
 @MainActor
 final class Updates: ObservableObject {
     enum State {
-        case checking, current, available(Installer), downloading, opened, failed(String)
+        case checking, current, available(Installer), downloading, preparing, restarting, failed(String)
     }
     @Published private(set) var state = State.checking
     let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
@@ -117,15 +116,22 @@ final class Updates: ObservableObject {
             } catch { state = .failed(error.localizedDescription) }
         }
     }
-    func download(_ installer: Installer) {
+    func install(_ installer: Installer, in space: Workspace) {
         guard operation == nil else { return }
         state = .downloading
         operation = Task {
             defer { operation = nil }
             do {
+                try space.requireSavedEditor()
                 let url = try await installer.download()
-                guard NSWorkspace.shared.open(url) else { throw UpdateError.open }
-                state = .opened
+                state = .preparing
+                let installed = Bundle.main.bundleURL
+                guard let id = Bundle.main.bundleIdentifier else { throw UpdateError.invalidRelease }
+                let replacement = try await Task.detached {
+                    try AppReplacement.prepare(image: url, installer: installer, installed: installed, identifier: id)
+                }.value
+                state = .restarting
+                try await space.restart(with: replacement)
             } catch { state = .failed(error.localizedDescription) }
         }
     }
@@ -133,6 +139,7 @@ final class Updates: ObservableObject {
 
 struct UpdateView: View {
     @ObservedObject var updates: Updates
+    let space: Workspace
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -146,13 +153,12 @@ struct UpdateView: View {
             switch updates.state {
             case .checking: ProgressView("正在检查 GitHub 正式版…")
             case .downloading: ProgressView("正在下载并校验安装包…")
+            case .preparing: ProgressView("正在准备新版折历…")
+            case .restarting: ProgressView("正在替换并重新启动…")
             case .current: Label("已是最新版本", systemImage: "checkmark.circle")
             case let .available(installer):
                 Text("发现新版本 v" + installer.version).font(.headline)
-                Button("下载并打开安装包") { updates.download(installer) }.keyboardShortcut(.defaultAction)
-            case .opened:
-                Text("安装包已打开。请先保存编辑并退出折历，再将新版拖到当前应用所在文件夹，选择「替换」。")
-                Button("显示当前应用位置") { NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL]) }
+                Button("更新并重启") { updates.install(installer, in: space) }.keyboardShortcut(.defaultAction)
             case let .failed(message):
                 Text(message)
                 Button("重新检查") { updates.check() }
