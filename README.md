@@ -2,6 +2,17 @@
 
 折历是一款原生 macOS 桌面待办日历。它可以缩成一条可拖动的窄栏，展开后即可查看、编辑和勾选每天的任务。首版采用 SwiftUI 与 AppKit，任务保存在本机。
 
+## 下载与安装
+
+**[下载折历 v0.1.0（macOS 通用 DMG）](https://github.com/liangxiaoLv/dayfold/releases/download/v0.1.0/Dayfold-0.1.0-macOS-universal.dmg)**
+
+适用于 macOS 14 及以上版本，支持 Apple 芯片和 Intel Mac。
+
+1. 双击下载的 DMG，将「折历」拖到旁边的「Applications（应用程序）」文件夹。
+2. 从「应用程序」打开「折历」，即可在桌面查看本周的待办。
+
+v0.1.0 尚未经过 Apple 公证。若首次打开时提示无法验证开发者，确认安装包来自本仓库后，可前往「系统设置 → 隐私与安全性」选择「仍要打开」。[Apple 官方说明](https://support.apple.com/zh-cn/102445) · [版本说明与 SHA-256 校验值](https://github.com/liangxiaoLv/dayfold/releases/tag/v0.1.0)
+
 ## 已确认的功能
 
 - 用户可以配置桌面日历，点击切换日、周、月视图。
