@@ -44,6 +44,8 @@ final class Reminders: NSObject, UNUserNotificationCenterDelegate {
     }
 }
 
+let compactBarFrameName: NSWindow.FrameAutosaveName = "CompactBar"
+
 final class DesktopPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
@@ -106,7 +108,12 @@ final class Workspace: ObservableObject {
         let size = NSSize(width: 176, height: 38)
         let frame = NSRect(x: board.frame.maxX - size.width, y: board.frame.maxY - size.height,
                            width: size.width, height: size.height)
-        bar.setFrame(frame, display: true)
+        bar.setFrame(frame, display: false)
+        if bar.setFrameUsingName(compactBarFrameName, force: true),
+           !NSScreen.screens.contains(where: { $0.visibleFrame.contains(bar.frame) }) {
+            // The saved location may belong to a disconnected display.
+            bar.setFrame(frame, display: false)
+        }
         compactBar = bar
         board.orderOut(nil)
         bar.orderFrontRegardless()

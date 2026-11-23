@@ -123,17 +123,21 @@ struct CompactBar: View {
 private struct WindowDragArea: NSViewRepresentable {
     final class Handle: NSView {
         private var grabOffset: NSPoint?
+        private var moved = false
         override var mouseDownCanMoveWindow: Bool { false }
         override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
         override func mouseDown(with event: NSEvent) {
+            moved = false
             grabOffset = event.locationInWindow
         }
         override func mouseDragged(with event: NSEvent) {
             guard let window, let grabOffset else { return }
             let pointer = window.convertPoint(toScreen: event.locationInWindow)
             window.setFrameOrigin(NSPoint(x: pointer.x - grabOffset.x, y: pointer.y - grabOffset.y))
+            moved = true
         }
         override func mouseUp(with event: NSEvent) {
+            if moved { window?.saveFrame(usingName: compactBarFrameName) }
             grabOffset = nil
         }
         override func resetCursorRects() {
