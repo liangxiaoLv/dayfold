@@ -63,6 +63,8 @@ final class Workspace: ObservableObject {
     @Published var today = Day(Date())
     private var board: NSPanel?
     private var compactBar: NSPanel?
+    private let updates = Updates()
+    private var updateWindow: NSWindow?
     private var overview: NSWindow?
     private var editor: NSWindow?
     init() {
@@ -155,6 +157,17 @@ final class Workspace: ObservableObject {
         window.center()
         return window
     }
+    func checkForUpdates() {
+        if updateWindow == nil {
+            let win = window(title: "检查更新", size: CGSize(width: 380, height: 225), resizable: false)
+            win.contentView = host(UpdateView(updates: updates))
+            updateWindow = win
+        }
+        if updateWindow?.isVisible != true { updates.check() }
+        updateWindow?.level = pinned ? .floating : .normal
+        updateWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
     func openOverview() {
         if overview == nil {
             let win = window(title: "任务总览", size: CGSize(width: 660, height: 500), resizable: true)
@@ -198,6 +211,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appItem = NSMenuItem()
         let app = NSMenu()
         app.addItem(withTitle: "任务总览", action: #selector(showOverview), keyEquivalent: "0").target = self
+        app.addItem(withTitle: "检查更新…", action: #selector(checkUpdates), keyEquivalent: "").target = self
         app.addItem(withTitle: "退出折历", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = app
         menu.addItem(appItem)
@@ -216,6 +230,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     @objc private func position() { space.position() }
     @objc private func refresh() { space.refreshDay() }
+    @objc private func checkUpdates() { space.checkForUpdates() }
     @objc private func showOverview() { space.openOverview() }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         space.openOverview()

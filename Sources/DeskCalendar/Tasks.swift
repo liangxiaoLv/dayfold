@@ -108,6 +108,7 @@ struct Overview: View {
             HStack {
                 Text("任务总览").font(.largeTitle.bold())
                 Spacer()
+                Button("检查更新") { space.checkForUpdates() }
                 Button { space.edit(CalendarTask(on: space.today)) } label: { Label("新增待办", systemImage: "plus") }
             }
             let day = Day(date)
