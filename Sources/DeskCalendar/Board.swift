@@ -36,10 +36,28 @@ struct BoardView: View {
                     Button { choosingPlacement.toggle() } label: { Image(systemName: "rectangle.split.2x2") }
                         .help("桌面占用范围与位置").accessibilityLabel("桌面布局")
                         .popover(isPresented: $choosingPlacement) {
-                            PlacementPicker(selected: space.placement) { placement in
-                                choosingPlacement = false
-                                space.placement = placement
-                            }
+                            VStack(alignment: .leading, spacing: 8) {
+                                if space.displays.count > 1 {
+                                    Text("显示器").font(.headline)
+                                    ForEach(space.displays, id: \.self) { screen in
+                                        Button {
+                                            choosingPlacement = false
+                                            space.selectDisplay(screen)
+                                        } label: {
+                                            HStack {
+                                                Text(screen.localizedName)
+                                                Spacer()
+                                                if screen == space.calendarScreen { Image(systemName: "checkmark") }
+                                            }.contentShape(Rectangle())
+                                        }.buttonStyle(.plain)
+                                    }
+                                    Divider()
+                                }
+                                PlacementPicker(selected: space.placement) { placement in
+                                    choosingPlacement = false
+                                    space.placement = placement
+                                }
+                            }.padding(12)
                         }
                     Button("缩小") { space.collapse() }
                         .help("缩小为可拖动的一行")
@@ -178,7 +196,7 @@ private struct PlacementPicker: View {
                     }
                 }
             }
-        }.padding(12)
+        }
     }
 }
 

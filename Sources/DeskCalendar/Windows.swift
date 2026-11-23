@@ -44,6 +44,14 @@ final class Reminders: NSObject, UNUserNotificationCenterDelegate {
     }
 }
 
+extension NSScreen {
+    var dayfoldDisplayID: String? {
+        guard let number = deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+              let uuid = CGDisplayCreateUUIDFromDisplayID(number.uint32Value)?.takeRetainedValue() else { return nil }
+        return CFUUIDCreateString(nil, uuid) as String
+    }
+}
+
 let compactBarFrameName: NSWindow.FrameAutosaveName = "CompactBar"
 
 final class DesktopPanel: NSPanel {
@@ -77,7 +85,25 @@ final class Workspace: ObservableObject {
     @Published var pinned: Bool { didSet { defaults.set(pinned, forKey: "pinned"); applyLevel() } }
     @Published var anchor = Day(Date())
     @Published var today = Day(Date())
+    @Published private(set) var displays = NSScreen.screens
+    @Published private(set) var preferredDisplayID = UserDefaults.standard.string(forKey: "calendarDisplayUUID")
     private var board: NSPanel?
+    var calendarScreen: NSScreen? {
+        if let preferredDisplayID, let screen = displays.first(where: { $0.dayfoldDisplayID == preferredDisplayID }) { return screen }
+        return board?.screen ?? NSScreen.main ?? displays.first
+    }
+
+    func selectDisplay(_ screen: NSScreen) {
+        guard let id = screen.dayfoldDisplayID else { return }
+        preferredDisplayID = id
+        defaults.set(id, forKey: "calendarDisplayUUID")
+        position()
+    }
+
+    func screensChanged() {
+        displays = NSScreen.screens
+        position()
+    }
     private var compactBar: NSPanel?
     private let updates = Updates()
     private(set) var restarting = false
@@ -117,7 +143,7 @@ final class Workspace: ObservableObject {
         applyLevel()
         if let layout = RestartLayout.fromArguments() {
             anchor = Day(layout.anchor)
-            restore(board, frame: layout.board)
+            if preferredDisplayID == nil { restore(board, frame: layout.board) }
             if let frame = layout.bar { collapse(); restore(compactBar, frame: frame) }
             if let frame = layout.overview { openOverview(); restore(overview, frame: frame) }
         }
@@ -197,7 +223,7 @@ final class Workspace: ObservableObject {
         today = new
     }
     func position(animated: Bool = false) {
-        guard let screen = board?.screen ?? NSScreen.main else { return }
+        guard let screen = calendarScreen else { return }
         let frame = placement.frame(in: screen.visibleFrame).insetBy(dx: 6, dy: 6)
         board?.setFrame(frame, display: true, animate: animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
     }
@@ -295,7 +321,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(refresh), name: .NSCalendarDayChanged, object: nil)
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(refresh), name: NSWorkspace.didWakeNotification, object: nil)
     }
-    @objc private func position() { space.position() }
+    @objc private func position() { space.screensChanged() }
     @objc private func refresh() { space.refreshDay() }
     @objc private func checkUpdates() { space.checkForUpdates() }
     @objc private func showOverview() { space.openOverview() }
